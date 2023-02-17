@@ -8,14 +8,14 @@
 import SwiftUI
 
 struct ContentView: View {
+    let store = AppStore(
+        initialState: .init(currentAnimal: "Dog"),
+        reducer: appReducer
+    )
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundColor(.accentColor)
-            Text("Hello, world!")
-        }
-        .padding()
+        AnimalView()
+            .environmentObject(store)
     }
 }
 
