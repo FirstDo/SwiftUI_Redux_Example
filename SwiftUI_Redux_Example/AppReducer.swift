@@ -6,47 +6,47 @@
 //
 
 import Foundation
-
-// State
-
-struct AppState {
-    var currentAnimal: String = ""
-}
-
-// Action
-
-enum AppAction {
-    case getAnimal
-}
+import Combine
 
 // Reducer
 
-typealias Reducer<State, Action> = (inout State, Action) -> Void
-
-func appReducer(state: inout AppState, action: AppAction) -> Void {
-    switch action {
-    case .getAnimal:
-        state.currentAnimal = [
-            "Cat","Dog","Crow","Horse","Iguana","Cow","Racoon"
-        ].randomElement()!
-    }
-}
-
 // Store
 
+typealias Middleware<State, Action> = (State, Action) -> AnyPublisher<Action, Never>?
 typealias AppStore = Store<AppState, AppAction>
 
 final class Store<State, Action>: ObservableObject {
     @Published private(set) var state: State
     
-    private let reducer: Reducer<State, Action>
+    private var tasks = [AnyCancellable]()
+    private let serialQueue = DispatchQueue(label: "redux.serial.queue")
     
-    init(initialState: State, reducer: @escaping Reducer<State, Action>) {
+    private let reducer: Reducer<State, Action>
+    let middlewares: [Middleware<State, Action>]
+    private var middlewareCancellables = Set<AnyCancellable>()
+    
+    init(
+        initialState: State,
+        reducer: @escaping Reducer<State, Action>,
+        middlewares: [Middleware<State, Action>] = []
+    ) {
         self.state = initialState
         self.reducer = reducer
+        self.middlewares = middlewares
     }
     
     func dispatch(_ action: Action) {
         reducer(&state, action)
+        
+        for mv in middlewares {
+            guard let middleware = mv(state, action) else {
+                break
+            }
+            
+            middleware
+                .receive(on: DispatchQueue.main)
+                .sink(receiveValue: dispatch)
+                .store(in: &middlewareCancellables)
+        }
     }
 }

@@ -9,20 +9,14 @@ import SwiftUI
 
 struct AnimalView: View {
     @EnvironmentObject var store: AppStore
+    
     var body: some View {
         VStack {
-            Text(store.state.currentAnimal)
+            Text(store.state.animal.currentAnimal)
                 .font(.system(.largeTitle))
             Button("Tap me") {
-                store.dispatch(.getAnimal)
+                store.dispatch(.animal(action: .fetchAnimal))
             }
         }
-    }
-}
-
-struct AnimalView_Previews: PreviewProvider {
-    static var previews: some View {
-        AnimalView()
-            .environmentObject(AppStore(initialState: .init(), reducer: appReducer(state:action:)))
     }
 }
