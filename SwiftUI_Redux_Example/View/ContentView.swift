@@ -15,7 +15,6 @@ struct ContentView: View {
             animalMiddleware(service: AnimalService())
         ]
     )
-    
     var body: some View {
         AnimalView()
             .environmentObject(store)

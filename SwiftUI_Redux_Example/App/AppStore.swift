@@ -1,25 +1,23 @@
 //
-//  AppReducer.swift
+//  AppStore.swift
 //  SwiftUI_Redux_Example
 //
-//  Created by dudu on 2023/02/17.
+//  Created by dudu on 2023/02/18.
 //
 
 import Foundation
 import Combine
 
-// Reducer
-
-// Store
-
 typealias Middleware<State, Action> = (State, Action) -> AnyPublisher<Action, Never>?
 typealias AppStore = Store<AppState, AppAction>
 
 final class Store<State, Action>: ObservableObject {
+    
     @Published private(set) var state: State
     
-    private var tasks = [AnyCancellable]()
-    private let serialQueue = DispatchQueue(label: "redux.serial.queue")
+    var task = [AnyCancellable]()
+    
+    let serialQueue = DispatchQueue(label: "redux.serial.queue")
     
     private let reducer: Reducer<State, Action>
     let middlewares: [Middleware<State, Action>]
@@ -39,9 +37,7 @@ final class Store<State, Action>: ObservableObject {
         reducer(&state, action)
         
         for mv in middlewares {
-            guard let middleware = mv(state, action) else {
-                break
-            }
+            guard let middleware = mv(state, action) else { break }
             
             middleware
                 .receive(on: DispatchQueue.main)
